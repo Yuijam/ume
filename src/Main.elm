@@ -1,13 +1,23 @@
 module Main exposing (main)
 
 import Browser
-import Element exposing (Element, alignRight, centerX, column, el, layout, padding, rgb255, spacing, text)
+import Element
+    exposing
+        ( Element
+        , alignRight
+        , centerX
+        , column
+        , el
+        , layout
+        , padding
+        , rgb255
+        , spacing
+        , text
+        )
 import Element.Border as Border
 import Element.Input as Input
 import Gua
 import Html exposing (Html)
-import Html.Attributes exposing (placeholder)
-import Html.Events exposing (onClick, onInput)
 
 
 type alias Model =
@@ -98,21 +108,6 @@ update msg ({ inputMod, guaMod } as model) =
 
                 ThirdNum ->
                     { model | inputMod = { inputMod | thirdNum = text } }
-
-
-
--- renderlist : List String -> (String -> Msg) -> Html Msg
--- renderlist list click =
---     list |> List.map (\l -> li [ onClick (click l) ] [ text l ]) |> Html.form []
--- view : Model -> Html Msg
--- view model =
---     div []
---         [ input [ placeholder "first", value model.firstNum, onInput <| Change FirstNum ] []
---         , input [ placeholder "second", value model.secondNum, onInput (Change SecondNum) ] []
---         , input [ placeholder "third", value model.thirdNum, onInput (Change ThirdNum) ] []
---         , button [ onClick CalcResult ] [ text "Result" ]
---         , h3 [] [ text model.result ]
---         ]
 
 
 inputView : InputModel -> Element Msg

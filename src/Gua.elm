@@ -1,28 +1,37 @@
 module Gua exposing (..)
 
-import Element exposing (Element, alignLeft, alignRight, centerX, column, el, fill, height, layout, none, padding, px, rgb255, row, spacing, text, width)
+import Element
+    exposing
+        ( Element
+        , alignLeft
+        , alignRight
+        , centerX
+        , column
+        , el
+        , fill
+        , height
+        , layout
+        , none
+        , padding
+        , px
+        , rgb255
+        , row
+        , spacing
+        , text
+        , width
+        )
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
-import Html exposing (math)
+import Yao as Yao exposing (..)
 
 
 type alias Model =
     ( Int, Int, Int )
 
 
-type YaoUnit
-    = Yin
-    | Yang
-
-
-type Yao
-    = Normal YaoUnit
-    | DongYao YaoUnit
-
-
 type alias Gua =
-    ( Yao, Yao, Yao )
+    ( Yao.Model, Yao.Model, Yao.Model )
 
 
 type alias GuaCfg =
@@ -30,6 +39,10 @@ type alias GuaCfg =
     , text : String
     , gua : Gua
     }
+
+
+type alias GuaConverter =
+    GuaCfg -> GuaCfg -> Int -> ( GuaCfg, GuaCfg )
 
 
 guaConfig : List GuaCfg
@@ -50,66 +63,6 @@ getGua guaNum =
     List.filter (\{ idx, text, gua } -> idx == guaNum) guaConfig |> List.head
 
 
-yaoView : Yao -> Element.Element msg
-yaoView yao =
-    case yao of
-        Normal Yin ->
-            row [ width fill ]
-                [ el
-                    [ Background.color (rgb255 0 0 0)
-                    , width (px 16)
-                    , height (px 10)
-                    , alignLeft
-                    ]
-                    none
-                , el
-                    [ Background.color (rgb255 0 0 0)
-                    , width (px 16)
-                    , height (px 10)
-                    , alignRight
-                    ]
-                    none
-                ]
-
-        DongYao Yin ->
-            row [ width fill ]
-                [ el
-                    [ Background.color (rgb255 255 0 0)
-                    , width (px 16)
-                    , height (px 10)
-                    , alignLeft
-                    ]
-                    none
-                , el
-                    [ Background.color (rgb255 255 0 0)
-                    , width (px 16)
-                    , height (px 10)
-                    , alignRight
-                    ]
-                    none
-                ]
-
-        Normal Yang ->
-            row [ width fill ]
-                [ el
-                    [ Background.color (rgb255 0 0 0)
-                    , width fill
-                    , height (px 10)
-                    ]
-                    none
-                ]
-
-        DongYao Yang ->
-            row [ width fill ]
-                [ el
-                    [ Background.color (rgb255 255 0 0)
-                    , width fill
-                    , height (px 10)
-                    ]
-                    none
-                ]
-
-
 guaView : GuaCfg -> Element.Element msg
 guaView guaCfg =
     let
@@ -121,41 +74,8 @@ guaView guaCfg =
 
 
 benGuaView : Model -> Element.Element msg
-benGuaView ( shangGuaNum, xiaGuaNum, dongYao ) =
-    let
-        shangGuaCfg =
-            getGua shangGuaNum
-
-        xiaGuaCfg =
-            getGua xiaGuaNum
-    in
-    case ( shangGuaCfg, xiaGuaCfg ) of
-        ( Just shangGua, Just xiaGua ) ->
-            column [ width (px 46), spacing 10 ]
-                [ guaView shangGua, guaView xiaGua ]
-
-        _ ->
-            none
-
-
-negate : YaoUnit -> YaoUnit
-negate yaoUnit =
-    case yaoUnit of
-        Yang ->
-            Yin
-
-        Yin ->
-            Yang
-
-
-negateToDongYao : Yao -> Yao
-negateToDongYao yao =
-    case yao of
-        Normal a ->
-            DongYao <| negate a
-
-        _ ->
-            yao
+benGuaView model =
+    bieGuaView model (\a b c -> ( a, b ))
 
 
 changeGuaCfgByDongYao : GuaCfg -> Int -> GuaCfg
@@ -178,7 +98,29 @@ changeGuaCfgByDongYao guaCfg dongYao =
             { guaCfg | gua = ( negateToDongYao yao1, yao2, yao3 ) }
 
 
-toBianGua : GuaCfg -> GuaCfg -> Int -> ( GuaCfg, GuaCfg )
+bieGuaView : Model -> GuaConverter -> Element.Element msg
+bieGuaView ( shangGuaNum, xiaGuaNum, dongYao ) converter =
+    let
+        shangGuaCfg =
+            getGua shangGuaNum
+
+        xiaGuaCfg =
+            getGua xiaGuaNum
+    in
+    case ( shangGuaCfg, xiaGuaCfg ) of
+        ( Just shangGua, Just xiaGua ) ->
+            let
+                ( shang, xia ) =
+                    converter shangGua xiaGua dongYao
+            in
+            column [ width (px 46), spacing 10 ]
+                [ guaView shang, guaView xia ]
+
+        _ ->
+            none
+
+
+toBianGua : GuaConverter
 toBianGua shangGuaCfg xiaGuaCfg dongYao =
     let
         isShangDong =
@@ -195,29 +137,12 @@ toBianGua shangGuaCfg xiaGuaCfg dongYao =
 
 
 bianGuaView : Model -> Element.Element msg
-bianGuaView ( shangGuaNum, xiaGuaNum, dongYao ) =
-    let
-        shangGuaCfg =
-            getGua shangGuaNum
-
-        xiaGuaCfg =
-            getGua xiaGuaNum
-    in
-    case ( shangGuaCfg, xiaGuaCfg ) of
-        ( Just shangGua, Just xiaGua ) ->
-            let
-                ( shang, xia ) =
-                    toBianGua shangGua xiaGua dongYao
-            in
-            column [ width (px 46), spacing 10 ]
-                [ guaView shang, guaView xia ]
-
-        _ ->
-            none
+bianGuaView model =
+    bieGuaView model toBianGua
 
 
-toHuGua : GuaCfg -> GuaCfg -> ( GuaCfg, GuaCfg )
-toHuGua shangGuaCfg xiaGuaCfg =
+toHuGua : GuaConverter
+toHuGua shangGuaCfg xiaGuaCfg _ =
     let
         ( shangYao1, shangYao2, shangYao3 ) =
             shangGuaCfg.gua
@@ -231,25 +156,8 @@ toHuGua shangGuaCfg xiaGuaCfg =
 
 
 huGuaView : Model -> Element.Element msg
-huGuaView ( shangGuaNum, xiaGuaNum, dongYao ) =
-    let
-        shangGuaCfg =
-            getGua shangGuaNum
-
-        xiaGuaCfg =
-            getGua xiaGuaNum
-    in
-    case ( shangGuaCfg, xiaGuaCfg ) of
-        ( Just shangGua, Just xiaGua ) ->
-            let
-                ( shang, xia ) =
-                    toHuGua shangGua xiaGua
-            in
-            column [ width (px 46), spacing 10 ]
-                [ guaView shang, guaView xia ]
-
-        _ ->
-            none
+huGuaView model =
+    bieGuaView model toHuGua
 
 
 view : Model -> Element.Element msg
