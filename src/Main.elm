@@ -1,7 +1,5 @@
 module Main exposing (main)
 
--- import Html exposing (Attribute, Html, button, div, h3, input, li, text, ul)
-
 import Browser
 import Element exposing (Element, alignRight, centerX, column, el, layout, padding, rgb255, spacing, text)
 import Element.Border as Border
@@ -20,10 +18,6 @@ type alias Model =
 
 type alias InputModel =
     { firstNum : String, secondNum : String, thirdNum : String, result : String }
-
-
-
--- { firstNum : String, secondNum : String, thirdNum : String, result : String }
 
 
 type ChangeArea
@@ -54,21 +48,45 @@ inputNumToGuaNum inputNum modNum =
             -1
 
 
+toDongYaoNum : String -> Int
+toDongYaoNum dongYao =
+    let
+        n =
+            inputNumToGuaNum dongYao 6
+    in
+    if n == 0 then
+        6
+
+    else
+        n
+
+
 update : Msg -> Model -> Model
 update msg ({ inputMod, guaMod } as model) =
     case msg of
         CalcResult ->
             let
-                num1 =
+                shangGuaNum =
                     inputNumToGuaNum inputMod.firstNum 8
 
-                num2 =
+                xiaGuaNum =
                     inputNumToGuaNum inputMod.secondNum 8
 
-                num3 =
-                    inputNumToGuaNum inputMod.thirdNum 8
+                dongYaoNum =
+                    toDongYaoNum inputMod.thirdNum
             in
-            { model | guaMod = ( num1, num2, num3 ) }
+            { model
+                | guaMod = ( shangGuaNum, xiaGuaNum, dongYaoNum )
+                , inputMod =
+                    { inputMod
+                        | result =
+                            String.fromInt shangGuaNum
+                                ++ " "
+                                ++ String.fromInt xiaGuaNum
+                                ++ " "
+                                ++ String.fromInt dongYaoNum
+                    }
+            }
 
         Change area text ->
             case area of
